@@ -23,28 +23,21 @@ PHP_MAJOR_MINOR="${PHP_VERSION%.*}"
 
 configure_php_repository() {
   local runner_codename
-  local repository_codename
 
   runner_codename="$(. /etc/os-release && printf '%s' "${VERSION_CODENAME:-}")"
-  repository_codename="$runner_codename"
 
-  # Ondrej's PPA may not publish a suite on the newest GitHub-hosted image.
-  # Noble is the closest supported Ubuntu release and its packages are
-  # compatible with the newer runner for the PHP versions supported here.
-  if [[ "$runner_codename" == "resolute" || -z "$runner_codename" ]]; then
-    repository_codename="noble"
+  # The PPA does not publish Resolute packages. Sury is its canonical
+  # successor for this Ubuntu release and provides matching dependencies.
+  if [[ "$runner_codename" == "resolute" ]]; then
+    curl -sSLo /tmp/debsuryorg-archive-keyring.deb \
+      https://packages.sury.org/debsuryorg-archive-keyring.deb
+    sudo dpkg -i /tmp/debsuryorg-archive-keyring.deb
+    printf 'deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ %s main\n' \
+      "$runner_codename" | sudo tee /etc/apt/sources.list.d/php.list >/dev/null
+    return
   fi
 
   sudo add-apt-repository -y ppa:ondrej/php
-
-  if [[ "$repository_codename" != "$runner_codename" ]]; then
-    while IFS= read -r source_file; do
-      sudo sed -i -E \
-        "s#(https?://ppa\.launchpadcontent\.net/ondrej/php/ubuntu[[:space:]]+)[^[:space:]]+#\1${repository_codename}#" \
-        "$source_file"
-      sudo sed -i -E "s/^Suites: .*/Suites: ${repository_codename}/" "$source_file"
-    done < <(grep -rl 'ondrej/php' /etc/apt/sources.list.d 2>/dev/null || true)
-  fi
 }
 
 sudo apt-get update
