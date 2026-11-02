@@ -3,12 +3,13 @@
 Reusable GitHub Actions for PHP setup and FTP deployments across Cognivyn repositories.
 
 [![Test setup-php action](https://github.com/Cognivyn/gh-actions/actions/workflows/test-setup-php.yml/badge.svg)](https://github.com/Cognivyn/gh-actions/actions/workflows/test-setup-php.yml)
+[![Build setup-php image](https://github.com/Cognivyn/gh-actions/actions/workflows/build-setup-php-image.yml/badge.svg)](https://github.com/Cognivyn/gh-actions/actions/workflows/build-setup-php-image.yml)
 
 ## Available actions
 
 ### Setup PHP
 
-`setup-php` is a repository-owned composite action for installing supported PHP 8.2 or PHP 8.3 runtimes on Linux GitHub-hosted runners. It installs the requested major/minor runtime, optional extensions, and Composer without depending on a third-party setup action.
+`setup-php` is a Docker-based action for installing supported PHP 8.2 or PHP 8.3 runtimes on Linux GitHub-hosted runners. It uses a pre-built Docker image with PHP and common extensions pre-installed, resulting in faster execution compared to runtime installation.
 
 ```yaml
 - name: Set up PHP
@@ -19,7 +20,16 @@ Reusable GitHub Actions for PHP setup and FTP deployments across Cognivyn reposi
     install-composer: 'true'
 ```
 
-The action selects the appropriate PHP package source for the runner. Ubuntu Resolute uses the signed Sury PHP repository; earlier supported Ubuntu releases use the Ondřej PHP PPA.
+The Docker image includes PHP 8.2 and 8.3 with common extensions (mbstring, xml, curl, zip, bcmath, gmp, pdo_mysql, pdo_pgsql, pdo_sqlite) and Composer pre-installed. The action switches to the requested PHP version at runtime using `update-alternatives`.
+
+#### Docker Image
+
+The Docker image is built and published to GitHub Container Registry (GHCR) as `ghcr.io/Cognivyn/gh-actions/setup-php`. The image is automatically built and pushed on changes to the `setup-php/` directory via the [build-setup-php-image.yml](.github/workflows/build-setup-php-image.yml) workflow.
+
+Available tags:
+- `latest` - Latest stable build from main branch
+- `main` - Latest build from main branch
+- Semantic version tags (e.g., `v1.0.0`) for releases
 
 ### FTP Deploy
 
@@ -48,15 +58,20 @@ Use a commit SHA or a reviewed release tag instead of `@main` when reproducibili
 ## Repository layout
 
 ```text
-setup-php/                 PHP runtime and Composer setup action
-ftp-deploy/                FTP/FTPS deployment action
-.github/workflows/         Validation workflows
+setup-php/                 PHP runtime and Composer setup action (Docker-based)
+  - Dockerfile             Docker image with PHP 8.2/8.3 pre-installed
+  - entrypoint.sh          Version switching script
+  - action.yml             Action definition
+ftp-deploy/                FTP/FTPS deployment action (Docker-based)
+.github/workflows/         CI/CD workflows
+  - test-setup-php.yml     Validation workflow for setup-php
+  - build-setup-php-image.yml Docker image build and push workflow
 docs/ai-agents.md          Guidance for AI coding agents using this repository
 ```
 
 ## Validation
 
-The `Test setup-php action` workflow validates PHP 8.2 and PHP 8.3, Composer availability, and the required PHP extensions on `ubuntu-latest`.
+The `Test setup-php action` workflow validates PHP 8.2 and PHP 8.3, Composer availability, and the required PHP extensions on `ubuntu-latest`. The `Build and push setup-php Docker image` workflow builds and publishes the Docker image to GHCR on changes to the setup-php directory.
 
 ## License
 

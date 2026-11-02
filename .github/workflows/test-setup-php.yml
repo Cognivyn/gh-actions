@@ -5,10 +5,12 @@ on:
     paths:
       - 'setup-php/**'
       - '.github/workflows/test-setup-php.yml'
+      - '.github/workflows/build-setup-php-image.yml'
   push:
     branches:
       - 'main'
       - 'feature/setup-php-action'
+  workflow_dispatch:
 
 jobs:
   validate-setup-php:

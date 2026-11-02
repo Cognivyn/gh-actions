@@ -1,5 +1,8 @@
 name: "Setup PHP"
 description: "Install a pinned PHP version on the runner without external setup actions"
+branding:
+  icon: "terminal"
+  color: "purple"
 
 inputs:
   php-version:
@@ -16,16 +19,5 @@ inputs:
     default: "true"
 
 runs:
-  using: "composite"
-  steps:
-    - name: Install pinned PHP version
-      shell: bash
-      env:
-        PHP_VERSION: ${{ inputs.php-version }}
-        PHP_EXTENSIONS: ${{ inputs.extensions }}
-        INSTALL_COMPOSER: ${{ inputs.install-composer }}
-      run: bash "$GITHUB_ACTION_PATH/install-php.sh"
-
-    - name: Check installed PHP version
-      shell: bash
-      run: php -v
+  using: "docker"
+  image: "Dockerfile"
