@@ -27,7 +27,7 @@ jobs:
         uses: ./setup-php
         with:
           php-version: ${{ matrix.php-version }}
-          extensions: 'mbstring,xml,curl,zip'
+          extensions: 'openssl,mbstring,xml,pdo_mysql,curl,bcmath,gmp'
           install-composer: 'true'
 
       - name: Verify PHP version is installed
@@ -47,4 +47,4 @@ jobs:
       - name: Verify required PHP extensions are enabled
         shell: bash
         run: |
-          php -m | grep -E 'mbstring|xml|curl|zip' >/dev/null
+          php -m | grep -E 'openssl|mbstring|xml|pdo_mysql|curl|bcmath|gmp' >/dev/null
