@@ -21,6 +21,32 @@ esac
 
 PHP_MAJOR_MINOR="${PHP_VERSION%.*}"
 
+configure_php_repository() {
+  local runner_codename
+  local repository_codename
+
+  runner_codename="$(. /etc/os-release && printf '%s' "${VERSION_CODENAME:-}")"
+  repository_codename="$runner_codename"
+
+  # Ondrej's PPA may not publish a suite on the newest GitHub-hosted image.
+  # Noble is the closest supported Ubuntu release and its packages are
+  # compatible with the newer runner for the PHP versions supported here.
+  if [[ "$runner_codename" == "resolute" || -z "$runner_codename" ]]; then
+    repository_codename="noble"
+  fi
+
+  sudo add-apt-repository -y ppa:ondrej/php
+
+  if [[ "$repository_codename" != "$runner_codename" ]]; then
+    while IFS= read -r source_file; do
+      sudo sed -i -E \
+        "s#(https?://ppa\.launchpadcontent\.net/ondrej/php/ubuntu[[:space:]]+)[^[:space:]]+#\1${repository_codename}#" \
+        "$source_file"
+      sudo sed -i -E "s/^Suites: .*/Suites: ${repository_codename}/" "$source_file"
+    done < <(grep -rl 'ondrej/php' /etc/apt/sources.list.d 2>/dev/null || true)
+  fi
+}
+
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   software-properties-common \
@@ -30,7 +56,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   lsb-release
 
 # Ensure a modern PHP repository is available.
-sudo add-apt-repository -y ppa:ondrej/php
+configure_php_repository
 sudo apt-get update
 
 # Install the exact CLI/runtime version requested.
