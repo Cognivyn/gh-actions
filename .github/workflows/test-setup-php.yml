@@ -1,0 +1,50 @@
+name: Test setup-php action
+
+on:
+  pull_request:
+    paths:
+      - 'setup-php/**'
+      - '.github/workflows/test-setup-php.yml'
+  push:
+    branches:
+      - 'main'
+      - 'feature/setup-php-action'
+
+jobs:
+  validate-setup-php:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.2.28', '8.3.13']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run local setup-php action
+        id: setup
+        uses: ./setup-php
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: 'mbstring,xml,curl,zip'
+          install-composer: 'true'
+
+      - name: Verify PHP version is installed
+        shell: bash
+        run: |
+          php -v
+          php -r "echo PHP_VERSION . PHP_EOL;"
+          echo "${{ matrix.php-version }}" | grep -q "$(php -r 'echo PHP_MAJOR_VERSION . \".\" . PHP_MINOR_VERSION;')" || {
+            echo "Installed PHP version does not match requested major.minor version";
+            exit 1;
+          }
+
+      - name: Verify Composer is available
+        shell: bash
+        run: composer --version
+
+      - name: Verify required PHP extensions are enabled
+        shell: bash
+        run: |
+          php -m | grep -E 'mbstring|xml|curl|zip' >/dev/null
