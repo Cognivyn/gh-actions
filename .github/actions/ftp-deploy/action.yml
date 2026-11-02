@@ -1,0 +1,57 @@
+name: "FTP Deploy Action"
+description: "Deploy files to FTP server with SSL support and enhanced logging"
+branding:
+  icon: "upload-cloud"
+  color: "blue"
+
+inputs:
+  ftp_server:
+    description: "FTP server hostname"
+    required: true
+  ftp_username:
+    description: "FTP username"
+    required: true
+  ftp_password:
+    description: "FTP password"
+    required: true
+  ftp_port:
+    description: "FTP server port"
+    required: true
+  local_dir:
+    description: "Local directory to upload"
+    default: "."
+  remote_dir:
+    description: "Remote directory on FTP server"
+    default: "/"
+  ssl_enabled:
+    description: "Enable SSL/TLS connection"
+    default: "true"
+  exclude:
+    description: "Files to exclude (glob pattern)"
+    default: ".git*,.DS_Store"
+  dry_run:
+    description: "Show changes without writing to the FTP server"
+    default: "false"
+  parallel:
+    description: "Number of parallel connections for lftp mirror"
+    default: "4"
+  timeout:
+    description: "Network timeout in seconds for lftp operations"
+    default: "120"
+  max_retries:
+    description: "Maximum number of retries for network operations"
+    default: "5"
+  idle_timeout:
+    description: "Idle timeout in seconds for lftp connections"
+    default: "300"
+    required: false
+
+outputs:
+  files_uploaded:
+    description: "Number of files uploaded"
+  transfer_time:
+    description: "Total transfer time in seconds"
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
