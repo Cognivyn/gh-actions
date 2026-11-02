@@ -58,17 +58,39 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   "php${PHP_MAJOR_MINOR}-cli" \
   "php${PHP_MAJOR_MINOR}-common"
 
-# Install any requested extensions.
+# Ensure CLI resolves to the intended version before inspecting loaded modules.
+sudo update-alternatives --set php "/usr/bin/php${PHP_MAJOR_MINOR}"
+
+extension_package_name() {
+  case "$1" in
+    pdo_mysql) printf '%s' mysql ;;
+    pdo_pgsql) printf '%s' pgsql ;;
+    pdo_sqlite) printf '%s' sqlite3 ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+# Install requested extensions. Some modules, such as openssl, are built into
+# PHP or shipped with php-common and therefore do not have a separate Ubuntu
+# package. PDO driver names also differ from their package names.
 IFS=',' read -r -a exts <<< "$PHP_EXTENSIONS"
 for ext in "${exts[@]}"; do
   ext="${ext//[[:space:]]/}"
-  if [[ -n "$ext" ]]; then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "php${PHP_MAJOR_MINOR}-${ext}"
-  fi
-done
+  [[ -n "$ext" ]] || continue
 
-# Ensure CLI resolves to the intended version.
-sudo update-alternatives --set php "/usr/bin/php${PHP_MAJOR_MINOR}"
+  if php -r 'exit(extension_loaded($argv[1]) ? 0 : 1);' "$ext"; then
+    echo "setup-php: extension '$ext' is already enabled"
+    continue
+  fi
+
+  package_ext="$(extension_package_name "$ext")"
+  package="php${PHP_MAJOR_MINOR}-${package_ext}"
+  if ! apt-cache show "$package" >/dev/null 2>&1; then
+    echo "setup-php: no Ubuntu package found for PHP extension '$ext' (looked for '$package')" >&2
+    exit 1
+  fi
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$package"
+done
 
 # Verify the installed runtime version.
 php -v
