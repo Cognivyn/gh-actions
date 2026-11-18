@@ -8,12 +8,19 @@ on:
       - '.github/workflows/build-setup-php-image.yml'
   push:
     branches:
-      - 'main'
       - 'feature/setup-php-action'
   workflow_dispatch:
+  # Runs after the image is published so the action under test pulls the
+  # freshly built sswork/setup-php:8.3 tag instead of racing the build.
+  workflow_run:
+    workflows: ["Build and push setup-php Docker image"]
+    types: [completed]
+    branches: [main]
 
 jobs:
   validate-setup-php:
+    # For workflow_run events, only proceed when the image build succeeded.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,6 +30,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # workflow_run checks out the default branch by default; use the
+          # commit that triggered the image build so we test that code.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Run local setup-php action
         id: setup
