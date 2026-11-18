@@ -15,9 +15,6 @@ on:
 jobs:
   validate-setup-php:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
     strategy:
       fail-fast: false
       matrix:
@@ -26,15 +23,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # The setup-php image is an internal GHCR package, so the runner needs
-      # registry credentials before the docker action can pull it.
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run local setup-php action
         id: setup

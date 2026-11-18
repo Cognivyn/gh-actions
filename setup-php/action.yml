@@ -30,4 +30,4 @@ runs:
   # should pin this action to a commit SHA, which is what makes an unexpected
   # retag non-silent: moving the tag cannot change what a pinned caller runs
   # without a new commit here.
-  image: "docker://ghcr.io/cognivyn/gh-actions/setup-php:8.3"
+  image: "docker://sswork/setup-php:8.3"
