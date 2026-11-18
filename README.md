@@ -24,9 +24,12 @@ The Docker image includes PHP 8.2 and 8.3 with common extensions (mbstring, xml,
 
 #### Docker Image
 
-The Docker image is built and published to GitHub Container Registry (GHCR) as `ghcr.io/Cognivyn/gh-actions/setup-php`. The image is automatically built and pushed on changes to the `setup-php/` directory via the [build-setup-php-image.yml](.github/workflows/build-setup-php-image.yml) workflow.
+The Docker image is built and published to GitHub Container Registry (GHCR) as `ghcr.io/cognivyn/gh-actions/setup-php`. The action references that image directly (`docker://`), so a workflow job pulls it instead of building the Dockerfile — the build took four to seven minutes per job. The image is built and pushed on changes to the `setup-php/` directory, on a monthly schedule (so PHP patch releases keep arriving), and manually, via the [build-setup-php-image.yml](.github/workflows/build-setup-php-image.yml) workflow.
+
+The package must be **public**: a container action is pulled by the runner before any step runs, without credentials, so an internal package fails to pull.
 
 Available tags:
+- `8.3` - stable tag referenced by `setup-php/action.yml`, produced only from the default branch
 - `latest` - Latest stable build from main branch
 - `main` - Latest build from main branch
 - Semantic version tags (e.g., `v1.0.0`) for releases

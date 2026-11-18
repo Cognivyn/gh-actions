@@ -6,7 +6,7 @@ branding:
 
 inputs:
   php-version:
-    description: "Exact PHP version to install (for example 8.3.13)"
+    description: "PHP runtime to activate, as a major.minor.patch string (for example 8.3.13). Only the major.minor selects which preinstalled runtime is activated; the patch level is whatever the image ships. Supported: 8.2.x, 8.3.x"
     required: true
     default: "8.3.13"
   extensions:
@@ -20,4 +20,14 @@ inputs:
 
 runs:
   using: "docker"
-  image: "Dockerfile"
+  # Pulled from GHCR instead of being built from setup-php/Dockerfile on every
+  # job. The Dockerfile build took 4m39s-6m41s per job because it runs
+  # apt-get update, adds the Ondrej PPA, and installs PHP 8.2 and 8.3 from
+  # scratch. The image is built by build-setup-php-image.yml and rebuilt
+  # monthly so PHP patch releases keep arriving.
+  #
+  # `:8.3` is a mutable tag by design (the monthly rebuild moves it). Callers
+  # should pin this action to a commit SHA, which is what makes an unexpected
+  # retag non-silent: moving the tag cannot change what a pinned caller runs
+  # without a new commit here.
+  image: "docker://ghcr.io/cognivyn/gh-actions/setup-php:8.3"
