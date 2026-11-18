@@ -13,7 +13,7 @@ Reusable GitHub Actions for PHP setup and FTP deployments across Cognivyn reposi
 
 ```yaml
 - name: Set up PHP
-  uses: Cognivyn/gh-actions/setup-php@main
+  uses: Cognivyn/gh-actions/setup-php@<commit-sha>
   with:
     php-version: '8.3.13'
     extensions: 'mbstring,xml,curl,zip'
@@ -24,9 +24,11 @@ The Docker image includes PHP 8.2 and 8.3 with common extensions (mbstring, xml,
 
 #### Docker Image
 
-The Docker image is built and published to GitHub Container Registry (GHCR) as `ghcr.io/cognivyn/gh-actions/setup-php`. The action references that image directly (`docker://`), so a workflow job pulls it instead of building the Dockerfile — the build took four to seven minutes per job. The image is built and pushed on changes to the `setup-php/` directory, on a monthly schedule (so PHP patch releases keep arriving), and manually, via the [build-setup-php-image.yml](.github/workflows/build-setup-php-image.yml) workflow.
+The Docker image is built and published to Docker Hub as `sswork/setup-php` (and to GHCR as `ghcr.io/cognivyn/gh-actions/setup-php` for org-internal use). The action references the Docker Hub image directly (`docker://`), so a workflow job pulls it instead of building the Dockerfile — the build took four to seven minutes per job. Docker Hub is used because the GHCR package is internal and cannot be pulled anonymously by the runner. The image is built and pushed on changes to the `setup-php/` directory, on a monthly schedule (so PHP patch releases keep arriving), and manually, via the [build-setup-php-image.yml](.github/workflows/build-setup-php-image.yml) workflow.
 
-The package must be **public**: a container action is pulled by the runner before any step runs, without credentials, so an internal package fails to pull.
+The Docker Hub image must be **public**: a container action is pulled by the runner before any step runs, without credentials, so a private image fails to pull. This is why the action points at Docker Hub rather than the internal GHCR package.
+
+Pinning the action to a commit SHA freezes its definition (inputs, metadata, and entrypoint contract) but not the image itself: the runner still pulls whatever the mutable `8.3` tag points to at run time, so monthly rebuilds reach pinned callers. For bit-for-bit reproducibility, pin the image by digest in `setup-php/action.yml` instead.
 
 Available tags:
 - `8.3` - stable tag referenced by `setup-php/action.yml`, produced only from the default branch
@@ -74,7 +76,7 @@ docs/ai-agents.md          Guidance for AI coding agents using this repository
 
 ## Validation
 
-The `Test setup-php action` workflow validates PHP 8.2 and PHP 8.3, Composer availability, and the required PHP extensions on `ubuntu-latest`. The `Build and push setup-php Docker image` workflow builds and publishes the Docker image to GHCR on changes to the setup-php directory.
+The `Test setup-php action` workflow validates PHP 8.2 and PHP 8.3, Composer availability, and the required PHP extensions on `ubuntu-latest`. The `Build and push setup-php Docker image` workflow builds and publishes the Docker image to Docker Hub and GHCR on changes to the setup-php directory.
 
 ## License
 

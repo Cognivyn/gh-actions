@@ -18,7 +18,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/Cognivyn/gh-actions/setup-php
+  IMAGE_NAME: ghcr.io/cognivyn/gh-actions/setup-php
   HUB_IMAGE: sswork/setup-php
 
 jobs:
