@@ -7,6 +7,13 @@ on:
     paths:
       - 'setup-php/**'
       - '.github/workflows/build-setup-php-image.yml'
+  # The image bundles whatever PHP patch releases the base image had when it
+  # was built. Consumers pin this action to a commit, so without a scheduled
+  # rebuild the PHP patch level would freeze at the date of the last
+  # `setup-php/**` change. Rebuilding monthly keeps security patches flowing
+  # without re-introducing a per-job build.
+  schedule:
+    - cron: '0 4 1 * *'
   workflow_dispatch:
 
 env:
@@ -42,6 +49,10 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
+            # Stable major.minor tag that setup-php/action.yml references.
+            # Only produced on the default branch so a pull-request build can
+            # never move the tag out from under consumers.
+            type=raw,value=8.3,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
